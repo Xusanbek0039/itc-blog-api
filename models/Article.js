@@ -30,7 +30,7 @@ const articleSchema = new mongoose.Schema(
       maxlength: [500, "Tavsif 500 ta belgidan oshmasligi kerak"],
     },
 
-    // Maqola rasmi
+    // Maqola rasmi URL yoki fayl nomi
     image: {
       type: String,
       default: null,
@@ -56,7 +56,7 @@ const articleSchema = new mongoose.Schema(
       default: "Umumiy",
     },
 
-    // Maqola muallifi
+    // Maqola muallifi (User modeliga bog'lanadi)
     author: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -70,7 +70,7 @@ const articleSchema = new mongoose.Schema(
       default: "published",
     },
 
-    // Maqola teglar
+    // Maqola teglar (array)
     tags: [
       {
         type: String,
@@ -91,7 +91,7 @@ const articleSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // SEO uchun slug
+    // SEO uchun slug (unique)
     slug: {
       type: String,
       unique: true,
@@ -114,11 +114,14 @@ const articleSchema = new mongoose.Schema(
   {
     // Avtomatik createdAt va updatedAt maydonlarini qo'shish
     timestamps: true,
-  },
+  }
 )
 
 // Indekslar yaratish (tezroq qidiruv uchun)
-articleSchema.index({ title: "text", content: "text", description: "text" },{default_language: "none"})
+articleSchema.index(
+  { title: "text", content: "text", description: "text" },
+  { default_language: "none" }
+)
 articleSchema.index({ author: 1, createdAt: -1 })
 articleSchema.index({ category: 1, createdAt: -1 })
 articleSchema.index({ status: 1, createdAt: -1 })
@@ -139,24 +142,25 @@ articleSchema.virtual("commentsCount", {
   count: true,
 })
 
-// Virtual maydonlarni JSON ga qo'shish
+// Virtual maydonlarni JSON va Object ga qo'shish
 articleSchema.set("toJSON", { virtuals: true })
+articleSchema.set("toObject", { virtuals: true })
 
 // Slug yaratish uchun pre-save middleware
 articleSchema.pre("save", function (next) {
+  // Faqat sarlavha o'zgarganda yoki slug bo'lmasa slug yaratamiz
   if (this.isModified("title") && !this.slug) {
-    // Sarlavhadan slug yaratish
     this.slug = this.title
       .toLowerCase()
       .replace(/[^a-z0-9\s-]/g, "") // Maxsus belgilarni olib tashlash
       .replace(/\s+/g, "-") // Bo'shliqlarni tire bilan almashtirish
       .replace(/-+/g, "-") // Bir nechta tireni bitta tire bilan almashtirish
-      .trim("-") // Boshi va oxiridagi tirelarni olib tashlash
+      .replace(/^-+|-+$/g, "") // Boshi va oxiridagi tirelarni olib tashlash
   }
 
   // O'qish vaqtini hisoblash (taxminan 200 so'z/daqiqa)
   if (this.isModified("content")) {
-    const wordsCount = this.content.split(/\s+/).length
+    const wordsCount = this.content.trim().split(/\s+/).length
     this.readingTime = Math.ceil(wordsCount / 200)
   }
 
