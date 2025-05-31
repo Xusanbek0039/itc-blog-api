@@ -16,7 +16,7 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000
 const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"
-const MONGODB_URI = "mongodb+srv://itpark0071:Hxqtth70FbKC33vg@cluster0.lbsq5kq.mongodb.net/shoira_blog?retryWrites=true&w=majority&appName=Cluster0";
+const MONGODB_URI = "mongodb+srv://itpark0071:1zoImG9EvXvlcM62@blog.3ynva8v.mongodb.net/?retryWrites=true&w=majority&appName=blog";
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*"
 
 // Middleware
@@ -38,7 +38,7 @@ mongoose
 app.get("/", (req, res) => {
   res.json({
     status: "ok",
-    message: "Shoira Blog API server is running",
+    message: "ITC-Blog API server is running",
     version: "1.0.0",
   })
 })
