@@ -108,7 +108,7 @@ const articleSchema = new mongoose.Schema(
     language: {
       type: String,
       enum: ["uz", "en", "ru"],
-      default: "uz",
+      default: "en",
     },
   },
   {
