@@ -16,11 +16,11 @@ import jwt from "jsonwebtoken"
 // MODELS IMPORT
 // ===================================
 // Ma'lumotlar bazasi modellari
-import User from "./models/User.js"           // Foydalanuvchi modeli
-import Article from "./models/Article.js"     // Maqola modeli  
+import User from "./models/User.js" // Foydalanuvchi modeli
+import Article from "./models/Article.js" // Maqola modeli
 import Portfolio from "./models/Portfolio.js" // Portfolio modeli
-import Comment from "./models/Comment.js"     // Izoh modeli
-import Like from "./models/Like.js"           // Like modeli
+import Comment from "./models/Comment.js" // Izoh modeli
+import Like from "./models/Like.js" // Like modeli
 
 // ===================================
 // ENVIRONMENT VARIABLES
@@ -32,10 +32,12 @@ dotenv.config()
 // SERVER CONFIGURATION
 // ===================================
 const app = express()
-const PORT = process.env.PORT || 5000                    // Server porti
-const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"  // JWT maxfiy kaliti
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://itpark0071:1zoImG9EvXvlcM62@blog.3ynva8v.mongodb.net/?retryWrites=true&w=majority&appName=blog"  // MongoDB ulanish manzili
-const CORS_ORIGIN = process.env.CORS_ORIGIN || "*"       // CORS sozlamalari
+const PORT = process.env.PORT || 5000 // Server porti
+const JWT_SECRET = process.env.JWT_SECRET || "your-secret-key" // JWT maxfiy kaliti
+const MONGODB_URI =
+  process.env.MONGODB_URI ||
+  "mongodb+srv://itpark0071:1zoImG9EvXvlcM62@blog.3ynva8v.mongodb.net/?retryWrites=true&w=majority&appName=blog" // MongoDB ulanish manzili
+const CORS_ORIGIN = process.env.CORS_ORIGIN || "*" // CORS sozlamalari
 
 // ===================================
 // MIDDLEWARE SETUP
@@ -43,8 +45,8 @@ const CORS_ORIGIN = process.env.CORS_ORIGIN || "*"       // CORS sozlamalari
 // CORS - Cross-Origin Resource Sharing sozlamalari
 app.use(
   cors({
-    origin: CORS_ORIGIN,     // Qaysi domenlardan so'rov qabul qilish
-    credentials: true,       // Cookie va authentication ma'lumotlarini qabul qilish
+    origin: CORS_ORIGIN, // Qaysi domenlardan so'rov qabul qilish
+    credentials: true, // Cookie va authentication ma'lumotlarini qabul qilish
   }),
 )
 
@@ -69,7 +71,7 @@ app.get("/", (req, res) => {
     status: "ok",
     message: "ITC-Blog API server is running",
     version: "2.0.0",
-    features: ["Authentication", "Articles", "Portfolio", "Comments", "Likes"]
+    features: ["Authentication", "Articles", "Portfolio", "Comments", "Likes"],
   })
 })
 
@@ -79,7 +81,7 @@ app.get("/api/health", (req, res) => {
     status: "ok",
     message: "Server is running",
     environment: process.env.NODE_ENV || "development",
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
   })
 })
 
@@ -109,7 +111,7 @@ const auth = async (req, res, next) => {
 
     // Token ni verify qilish
     const decoded = jwt.verify(token, JWT_SECRET)
-    
+
     // Foydalanuvchini ma'lumotlar bazasidan topish
     const user = await User.findById(decoded.id)
 
@@ -132,7 +134,13 @@ const auth = async (req, res, next) => {
 // 📝 FOYDALANUVCHI RO'YXATDAN O'TISH
 app.post("/api/users/register", async (req, res) => {
   try {
+    console.log("📝 Registration request received:", req.body)
     const { name, email, password } = req.body
+
+    // Input validation
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Barcha maydonlar to'ldirilishi shart" })
+    }
 
     // Foydalanuvchi allaqachon mavjudligini tekshirish
     let user = await User.findOne({ email })
@@ -165,7 +173,7 @@ app.post("/api/users/register", async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
       },
     })
   } catch (error) {
@@ -177,7 +185,13 @@ app.post("/api/users/register", async (req, res) => {
 // 🔐 FOYDALANUVCHI TIZIMGA KIRISH
 app.post("/api/users/login", async (req, res) => {
   try {
+    console.log("🔐 Login request received:", { email: req.body.email })
     const { email, password } = req.body
+
+    // Input validation
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email va parol kiritish shart" })
+    }
 
     // Foydalanuvchi mavjudligini tekshirish
     const user = await User.findOne({ email })
@@ -202,7 +216,7 @@ app.post("/api/users/login", async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
       },
     })
   } catch (error) {
@@ -238,7 +252,7 @@ app.put("/api/users/profile", auth, async (req, res) => {
         _id: user._id,
         name: user.name,
         email: user.email,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
       },
     })
   } catch (error) {
@@ -282,24 +296,22 @@ app.put("/api/users/password", auth, async (req, res) => {
 app.get("/api/articles", async (req, res) => {
   try {
     // Maqolalarni eng yangi birinchi bo'lib saralash va author ma'lumotlarini populate qilish
-    const articles = await Article.find()
-      .populate('author', 'name email')
-      .sort({ createdAt: -1 })
-    
+    const articles = await Article.find().populate("author", "name email").sort({ createdAt: -1 })
+
     // Har bir maqola uchun like va comment sonini hisoblash
     const articlesWithStats = await Promise.all(
       articles.map(async (article) => {
         const likesCount = await Like.countDocuments({ article: article._id })
         const commentsCount = await Comment.countDocuments({ article: article._id })
-        
+
         return {
           ...article.toObject(),
           likes: likesCount,
-          commentsCount: commentsCount
+          commentsCount: commentsCount,
         }
-      })
+      }),
     )
-    
+
     res.json(articlesWithStats)
   } catch (error) {
     console.error("Get articles error:", error)
@@ -312,23 +324,23 @@ app.get("/api/articles/user", auth, async (req, res) => {
   try {
     // Faqat joriy foydalanuvchining maqolalarini olish
     const articles = await Article.find({ author: req.user._id })
-      .populate('author', 'name email')
+      .populate("author", "name email")
       .sort({ createdAt: -1 })
-    
+
     // Har bir maqola uchun like va comment sonini hisoblash
     const articlesWithStats = await Promise.all(
       articles.map(async (article) => {
         const likesCount = await Like.countDocuments({ article: article._id })
         const commentsCount = await Comment.countDocuments({ article: article._id })
-        
+
         return {
           ...article.toObject(),
           likes: likesCount,
-          commentsCount: commentsCount
+          commentsCount: commentsCount,
         }
-      })
+      }),
     )
-    
+
     res.json(articlesWithStats)
   } catch (error) {
     console.error("Get user articles error:", error)
@@ -339,8 +351,7 @@ app.get("/api/articles/user", auth, async (req, res) => {
 // 📖 BITTA MAQOLANI OLISH (ommaviy)
 app.get("/api/articles/:id", async (req, res) => {
   try {
-    const article = await Article.findById(req.params.id)
-      .populate('author', 'name email')
+    const article = await Article.findById(req.params.id).populate("author", "name email")
 
     if (!article) {
       return res.status(404).json({ message: "Maqola topilmadi" })
@@ -353,7 +364,7 @@ app.get("/api/articles/:id", async (req, res) => {
     const articleWithStats = {
       ...article.toObject(),
       likes: likesCount,
-      commentsCount: commentsCount
+      commentsCount: commentsCount,
     }
 
     res.json(articleWithStats)
@@ -375,15 +386,15 @@ app.post("/api/articles", auth, async (req, res) => {
       description,
       category,
       image,
-      author: req.user._id,  // Author ID sini saqlash
+      author: req.user._id, // Author ID sini saqlash
     })
 
     // Ma'lumotlar bazasiga saqlash
     await newArticle.save()
-    
+
     // Author ma'lumotlarini populate qilish
-    await newArticle.populate('author', 'name email')
-    
+    await newArticle.populate("author", "name email")
+
     res.status(201).json(newArticle)
   } catch (error) {
     console.error("Create article error:", error)
@@ -415,8 +426,8 @@ app.put("/api/articles/:id", auth, async (req, res) => {
 
     // O'zgarishlarni saqlash
     await article.save()
-    await article.populate('author', 'name email')
-    
+    await article.populate("author", "name email")
+
     res.json(article)
   } catch (error) {
     console.error("Update article error:", error)
@@ -468,9 +479,9 @@ app.post("/api/articles/:id/like", auth, async (req, res) => {
     }
 
     // Foydalanuvchi allaqachon like bosganmi tekshirish
-    const existingLike = await Like.findOne({ 
-      article: articleId, 
-      user: userId 
+    const existingLike = await Like.findOne({
+      article: articleId,
+      user: userId,
     })
 
     if (existingLike) {
@@ -480,7 +491,7 @@ app.post("/api/articles/:id/like", auth, async (req, res) => {
     // Yangi like yaratish
     const newLike = new Like({
       article: articleId,
-      user: userId
+      user: userId,
     })
 
     await newLike.save()
@@ -488,10 +499,10 @@ app.post("/api/articles/:id/like", auth, async (req, res) => {
     // Jami like sonini hisoblash
     const totalLikes = await Like.countDocuments({ article: articleId })
 
-    res.json({ 
+    res.json({
       message: "Like qo'shildi",
       likes: totalLikes,
-      isLiked: true
+      isLiked: true,
     })
   } catch (error) {
     console.error("Like article error:", error)
@@ -512,9 +523,9 @@ app.delete("/api/articles/:id/like", auth, async (req, res) => {
     }
 
     // Like mavjudligini tekshirish va o'chirish
-    const deletedLike = await Like.findOneAndDelete({ 
-      article: articleId, 
-      user: userId 
+    const deletedLike = await Like.findOneAndDelete({
+      article: articleId,
+      user: userId,
     })
 
     if (!deletedLike) {
@@ -524,10 +535,10 @@ app.delete("/api/articles/:id/like", auth, async (req, res) => {
     // Jami like sonini hisoblash
     const totalLikes = await Like.countDocuments({ article: articleId })
 
-    res.json({ 
+    res.json({
       message: "Like olib tashlandi",
       likes: totalLikes,
-      isLiked: false
+      isLiked: false,
     })
   } catch (error) {
     console.error("Unlike article error:", error)
@@ -553,16 +564,16 @@ app.get("/api/articles/:id/likes", async (req, res) => {
     // Agar user login qilgan bo'lsa, uning like qilganligini tekshirish
     let isLiked = false
     if (userId) {
-      const userLike = await Like.findOne({ 
-        article: articleId, 
-        user: userId 
+      const userLike = await Like.findOne({
+        article: articleId,
+        user: userId,
       })
       isLiked = !!userLike
     }
 
-    res.json({ 
+    res.json({
       count: totalLikes,
-      isLiked: isLiked
+      isLiked: isLiked,
     })
   } catch (error) {
     console.error("Get article likes error:", error)
@@ -586,9 +597,7 @@ app.get("/api/articles/:id/comments", async (req, res) => {
     }
 
     // Commentlarni olish va author ma'lumotlarini populate qilish
-    const comments = await Comment.find({ article: articleId })
-      .populate('author', 'name email')
-      .sort({ createdAt: -1 })
+    const comments = await Comment.find({ article: articleId }).populate("author", "name email").sort({ createdAt: -1 })
 
     res.json(comments)
   } catch (error) {
@@ -618,13 +627,13 @@ app.post("/api/articles/:id/comments", auth, async (req, res) => {
     const newComment = new Comment({
       content: content.trim(),
       article: articleId,
-      author: req.user._id
+      author: req.user._id,
     })
 
     await newComment.save()
-    
+
     // Author ma'lumotlarini populate qilish
-    await newComment.populate('author', 'name email')
+    await newComment.populate("author", "name email")
 
     res.status(201).json(newComment)
   } catch (error) {
@@ -664,9 +673,9 @@ app.put("/api/articles/:articleId/comments/:commentId", auth, async (req, res) =
     comment.content = content.trim()
     comment.updatedAt = new Date()
     await comment.save()
-    
+
     // Author ma'lumotlarini populate qilish
-    await comment.populate('author', 'name email')
+    await comment.populate("author", "name email")
 
     res.json(comment)
   } catch (error) {
@@ -717,9 +726,7 @@ app.delete("/api/articles/:articleId/comments/:commentId", auth, async (req, res
 // 💼 BARCHA PORTFOLIO ELEMENTLARINI OLISH (ommaviy)
 app.get("/api/portfolio", async (req, res) => {
   try {
-    const portfolioItems = await Portfolio.find()
-      .populate('author', 'name email')
-      .sort({ createdAt: -1 })
+    const portfolioItems = await Portfolio.find().populate("author", "name email").sort({ createdAt: -1 })
     res.json(portfolioItems)
   } catch (error) {
     console.error("Get portfolio items error:", error)
@@ -731,7 +738,7 @@ app.get("/api/portfolio", async (req, res) => {
 app.get("/api/portfolio/user", auth, async (req, res) => {
   try {
     const portfolioItems = await Portfolio.find({ author: req.user._id })
-      .populate('author', 'name email')
+      .populate("author", "name email")
       .sort({ createdAt: -1 })
     res.json(portfolioItems)
   } catch (error) {
@@ -743,8 +750,7 @@ app.get("/api/portfolio/user", auth, async (req, res) => {
 // 📁 BITTA PORTFOLIO ELEMENTINI OLISH (ommaviy)
 app.get("/api/portfolio/:id", async (req, res) => {
   try {
-    const portfolioItem = await Portfolio.findById(req.params.id)
-      .populate('author', 'name email')
+    const portfolioItem = await Portfolio.findById(req.params.id).populate("author", "name email")
 
     if (!portfolioItem) {
       return res.status(404).json({ message: "Portfolio topilmadi" })
@@ -771,8 +777,8 @@ app.post("/api/portfolio", auth, async (req, res) => {
     })
 
     await newPortfolio.save()
-    await newPortfolio.populate('author', 'name email')
-    
+    await newPortfolio.populate("author", "name email")
+
     res.status(201).json(newPortfolio)
   } catch (error) {
     console.error("Create portfolio error:", error)
@@ -802,8 +808,8 @@ app.put("/api/portfolio/:id", auth, async (req, res) => {
     portfolioItem.category = category
 
     await portfolioItem.save()
-    await portfolioItem.populate('author', 'name email')
-    
+    await portfolioItem.populate("author", "name email")
+
     res.json(portfolioItem)
   } catch (error) {
     console.error("Update portfolio error:", error)
@@ -840,19 +846,45 @@ app.delete("/api/portfolio/:id", auth, async (req, res) => {
 app.use((err, req, res, next) => {
   console.error("🔴 Global Error:", err.message)
   console.error(err.stack)
-  
+
   res.status(err.status || 500).json({
     message: err.message || "Server xatosi",
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
+    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
   })
 })
 
 // 404 handler
 app.use((req, res) => {
+  console.log(`❌ 404 - Route not found: ${req.method} ${req.path}`)
   res.status(404).json({
     message: "API endpoint topilmadi",
     path: req.path,
-    method: req.method
+    method: req.method,
+    availableEndpoints: [
+      "GET /",
+      "GET /api/health",
+      "POST /api/users/register",
+      "POST /api/users/login",
+      "PUT /api/users/profile",
+      "PUT /api/users/password",
+      "GET /api/articles",
+      "GET /api/articles/:id",
+      "POST /api/articles",
+      "PUT /api/articles/:id",
+      "DELETE /api/articles/:id",
+      "POST /api/articles/:id/like",
+      "DELETE /api/articles/:id/like",
+      "GET /api/articles/:id/likes",
+      "GET /api/articles/:id/comments",
+      "POST /api/articles/:id/comments",
+      "PUT /api/articles/:articleId/comments/:commentId",
+      "DELETE /api/articles/:articleId/comments/:commentId",
+      "GET /api/portfolio",
+      "GET /api/portfolio/:id",
+      "POST /api/portfolio",
+      "PUT /api/portfolio/:id",
+      "DELETE /api/portfolio/:id",
+    ],
   })
 })
 
