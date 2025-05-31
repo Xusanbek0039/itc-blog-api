@@ -118,7 +118,7 @@ const articleSchema = new mongoose.Schema(
 )
 
 // Indekslar yaratish (tezroq qidiruv uchun)
-articleSchema.index({ title: "text", content: "text", description: "text" })
+articleSchema.index({ title: "text", content: "text", description: "text" },{default_language: "none"})
 articleSchema.index({ author: 1, createdAt: -1 })
 articleSchema.index({ category: 1, createdAt: -1 })
 articleSchema.index({ status: 1, createdAt: -1 })
