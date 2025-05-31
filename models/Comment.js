@@ -51,7 +51,7 @@ const commentSchema = new mongoose.Schema(
       default: "comment",
     },
 
-    // Izoh like lari
+    // Izoh like lari (User ObjectId lar ro'yxati)
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -74,7 +74,11 @@ const commentSchema = new mongoose.Schema(
   {
     // Avtomatik createdAt va updatedAt maydonlarini qo'shish
     timestamps: true,
-  },
+
+    // Virtual maydonlarni JSON va Object ga qo'shish
+    toJSON: { virtuals: true },
+    toObject: { virtuals: true },
+  }
 )
 
 // Indekslar yaratish (tezroq qidiruv uchun)
@@ -83,7 +87,7 @@ commentSchema.index({ author: 1, createdAt: -1 })
 commentSchema.index({ parentComment: 1 })
 commentSchema.index({ status: 1 })
 
-// Virtual maydon - javob izohlar soni
+// Virtual maydon - javob izohlar soni (repliesCount)
 commentSchema.virtual("repliesCount", {
   ref: "Comment",
   localField: "_id",
@@ -92,12 +96,10 @@ commentSchema.virtual("repliesCount", {
 })
 
 // Virtual maydon - like lar soni
-commentSchema.virtual("likesCount", function () {
+// TO’G’RI USUL: ref orqali hisoblash emas, likes array uzunligini hisoblash
+commentSchema.virtual("likesCount").get(function () {
   return this.likes ? this.likes.length : 0
 })
-
-// Virtual maydonlarni JSON ga qo'shish
-commentSchema.set("toJSON", { virtuals: true })
 
 // Izoh o'zgartirilganda editedAt ni yangilash
 commentSchema.pre("save", function (next) {
