@@ -30,7 +30,6 @@ import Like from "./models/Like.js" // Like modeli
 // ===================================
 // Muhit o'zgaruvchilarini yuklash
 dotenv.config()
-
 // ===================================
 // SERVER CONFIGURATION
 // ===================================
