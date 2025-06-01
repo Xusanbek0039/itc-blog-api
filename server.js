@@ -674,6 +674,139 @@ app.delete("/api/articles/:id", auth, async (req, res) => {
 // ===================================
 // LIKE MANAGEMENT ROUTES
 // ===================================
+import Portfolio from "./models/Portfolio.js"
+const router = express.Router()
+
+// ✍️ Yangi portfolio elementi yaratish (himoyalangan)
+router.post("/api/portfolio", auth, async (req, res) => {
+  try {
+    const {
+      title,
+      content,
+      image,
+      category,
+      status,
+      technologies,
+      links,
+      duration,
+      role,
+      features,
+      tags,
+      priority,
+    } = req.body
+
+    // Input validation (minimal misol)
+    if (!title || !content || !category) {
+      return res.status(400).json({ message: "Title, content va category majburiy" })
+    }
+
+    // Yangi portfolio elementi yaratish
+    const newPortfolio = new Portfolio({
+      title: title.trim(),
+      content,
+      image: image || null,
+      category,
+      status: status || "completed",
+      technologies: Array.isArray(technologies) ? technologies : [],
+      links: links || {},
+      duration: duration || "",
+      role: role || "Full Stack Developer",
+      features: Array.isArray(features) ? features : [],
+      tags: Array.isArray(tags) ? tags.map((t) => t.toLowerCase().trim()) : [],
+      priority: priority || "medium",
+      author: req.user._id, // user id dan olamiz (auth middleware orqali)
+    })
+
+    await newPortfolio.save()
+    await newPortfolio.populate("author", "name email")
+
+    res.status(201).json(newPortfolio)
+  } catch (error) {
+    console.error("Create portfolio error:", error)
+    if (error.name === "ValidationError") {
+      const messages = Object.values(error.errors).map((e) => e.message)
+      return res.status(400).json({ message: messages.join(", ") })
+    }
+    res.status(500).json({ message: "Server xatosi: " + error.message })
+  }
+})
+
+// ✏️ Portfolio elementini yangilash (himoyalangan)
+router.put("/api/portfolio/:id", auth, async (req, res) => {
+  try {
+    const portfolio = await Portfolio.findById(req.params.id)
+    if (!portfolio) return res.status(404).json({ message: "Loyiha topilmadi" })
+
+    // Foydalanuvchi loyihaning muallifi ekanligini tekshirish
+    if (portfolio.author.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Ruxsat berilmagan" })
+    }
+
+    // Yangilash uchun maydonlar
+    const {
+      title,
+      content,
+      image,
+      category,
+      status,
+      technologies,
+      links,
+      duration,
+      role,
+      features,
+      tags,
+      priority,
+    } = req.body
+
+    if (title) portfolio.title = title.trim()
+    if (content) portfolio.content = content
+    if (image !== undefined) portfolio.image = image
+    if (category) portfolio.category = category
+    if (status) portfolio.status = status
+    if (technologies) portfolio.technologies = Array.isArray(technologies) ? technologies : portfolio.technologies
+    if (links) portfolio.links = links
+    if (duration !== undefined) portfolio.duration = duration
+    if (role !== undefined) portfolio.role = role
+    if (features) portfolio.features = Array.isArray(features) ? features : portfolio.features
+    if (tags) portfolio.tags = Array.isArray(tags) ? tags.map((t) => t.toLowerCase().trim()) : portfolio.tags
+    if (priority) portfolio.priority = priority
+
+    await portfolio.save()
+    await portfolio.populate("author", "name email")
+
+    res.json(portfolio)
+  } catch (error) {
+    console.error("Update portfolio error:", error)
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Noto'g'ri loyiha ID" })
+    }
+    res.status(500).json({ message: "Server xatosi: " + error.message })
+  }
+})
+
+// 🗑️ Portfolio elementini o'chirish (himoyalangan)
+router.delete("/api/portfolio/:id", auth, async (req, res) => {
+  try {
+    const portfolio = await Portfolio.findById(req.params.id)
+    if (!portfolio) return res.status(404).json({ message: "Loyiha topilmadi" })
+
+    // Foydalanuvchi loyihaning muallifi ekanligini tekshirish
+    if (portfolio.author.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Ruxsat berilmagan" })
+    }
+
+    await portfolio.deleteOne()
+    res.json({ message: "Loyiha muvaffaqiyatli o'chirildi" })
+  } catch (error) {
+    console.error("Delete portfolio error:", error)
+    if (error.name === "CastError") {
+      return res.status(400).json({ message: "Noto'g'ri loyiha ID" })
+    }
+    res.status(500).json({ message: "Server xatosi: " + error.message })
+  }
+})
+
+export default router
 
 // ❤️ MAQOLANI LIKE QILISH (himoyalangan)
 app.post("/api/articles/:id/like", auth, async (req, res) => {
