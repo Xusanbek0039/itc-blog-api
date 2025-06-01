@@ -37,7 +37,7 @@ dotenv.config()
 const app = express()
 const PORT = process.env.PORT || 5000 // Server porti
 const JWT_SECRET = process.env.JWT_SECRET || "itc-blog-secret-key-2024" // JWT maxfiy kaliti
-const MONGODB_URI = "mongodb+srv://itpark0071:1zoImG9EvXvlcM62@blog.3ynva8v.mongodb.net/itc-blog?retryWrites=true&w=majority"
+const MONGODB_URI = process.env.MONGODB_URI;
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*" // CORS sozlamalari
 
 // ===================================
