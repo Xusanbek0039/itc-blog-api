@@ -43,7 +43,7 @@ const userSchema = new mongoose.Schema(
     // Profil rasmi (ixtiyoriy)
     avatar: {
       type: String,
-      default: null,
+      default: "null",
     },
 
     // Foydalanuvchi haqida ma'lumot
